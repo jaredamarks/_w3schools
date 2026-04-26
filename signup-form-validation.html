@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<style>
+input {
+  padding: 8px;
+  width: 260px;
+  margin-bottom: 4px;
+}
+.error {
+  color: red;
+  margin: 0;
+}
+.ok {
+  color: green;
+  margin: 0;
+}
+.field {
+  margin-bottom: 12px;
+}
+
+/* Inline status next to inputs for Exercise 3 */
+.status {
+  display: inline-block;
+  margin-left: 8px;
+  font-weight: bold;
+}
+.status.ok { color: green; }
+.status.error { color: red; }
+
+/* Password strength */
+.strength {
+  margin: 4px 0 0 0;
+  font-size: 0.9em;
+}
+.strength.weak { color: red; }
+.strength.medium { color: orange; }
+.strength.strong { color: green; }
+
+/* show/hide button */
+.toggle-btn {
+  margin-left: 8px;
+  padding: 4px 6px;
+  font-size: 0.9em;
+}
+</style>
+<body>
+
+<h1>Sign Up Form</h1>
+
+<form id="signupForm">
+
+<div class="field">
+  <label>Name:</label><br>
+  <input id="name" type="text" placeholder="Your name">
+  <span id="nameStatus" class="status"></span>
+  <p id="nameError" class="error"></p>
+</div>
+
+<div class="field">
+  <label>Email:</label><br>
+  <input id="email" type="text" placeholder="name@example.com">
+  <span id="emailStatus" class="status"></span>
+  <p id="emailError" class="error"></p>
+</div>
+
+<div class="field">
+  <label>Password:</label><br>
+  <input id="password" type="password" placeholder="Min 8 characters">
+  <button type="button" id="togglePassword" class="toggle-btn">Show</button>
+  <span id="passwordStatus" class="status"></span>
+  <p id="passwordError" class="error"></p>
+  <p id="passwordStrength" class="strength"></p>
+</div>
+
+<div class="field">
+  <label>Confirm Password:</label><br>
+  <input id="confirm" type="password" placeholder="Repeat password">
+  <span id="confirmStatus" class="status"></span>
+  <p id="confirmError" class="error"></p>
+</div>
+
+<p><button id="submitBtn" type="submit">Sign Up</button></p>
+
+</form>
+
+<p id="result"></p>
+
+<script>
+// Create an Object for each Field
+const form = document.getElementById("signupForm");
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passInput = document.getElementById("password");
+const confirmInput = document.getElementById("confirm");
+const nameError = document.getElementById("nameError");
+const emailError = document.getElementById("emailError");
+const passError = document.getElementById("passwordError");
+const confirmError = document.getElementById("confirmError");
+const result = document.getElementById("result");
+
+const nameStatus = document.getElementById("nameStatus");
+const emailStatus = document.getElementById("emailStatus");
+const passwordStatus = document.getElementById("passwordStatus");
+const confirmStatus = document.getElementById("confirmStatus");
+const passwordStrength = document.getElementById("passwordStrength");
+const submitBtn = document.getElementById("submitBtn");
+const togglePassword = document.getElementById("togglePassword");
+
+// Function to Display Error
+function showError(el, message) {
+  el.innerHTML = message;
+}
+
+// Function to Clear Error
+function clearError(el) {
+  el.innerHTML = "";
+}
+
+// Helper to set status text (green for ok, red for error)
+function setStatus(el, ok, text) {
+  if (!el) return;
+  el.textContent = text || (ok ? "OK" : "");
+  el.className = ok ? "status ok" : (text ? "status error" : "status");
+}
+
+// Function to Validate Name
+function validateName() {
+  let value = nameInput.value.trim();
+  if (value.length < 2) {
+    showError(nameError, "Name must be at least 2 characters.");
+    setStatus(nameStatus, false, "x");
+    return false;
+  }
+  clearError(nameError);
+  setStatus(nameStatus, true, "correct");
+  return true;
+}
+
+// Function to Validate Email
+function validateEmail() {
+  let value = emailInput.value.trim();
+  if (!(/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))) {
+    showError(emailError, "Enter a valid email address.");
+    setStatus(emailStatus, false, "x");
+    return false;
+  }
+  clearError(emailError);
+  setStatus(emailStatus, true, "correct");
+  return true;
+}
+
+// Function to check if password contains at least one number (Exercise 1)
+function containsNumber(s) {
+  return /\d/.test(s);
+}
+
+// Password strength helper (Bonus)
+function evaluateStrength(s) {
+  let score = 0;
+  if (s.length >= 8) score++;
+  if (/[A-Z]/.test(s) && /[a-z]/.test(s)) score++;
+  if (containsNumber(s)) score++;
+  if (/[^A-Za-z0-9]/.test(s)) score++;
+  if (score <= 1) return "Weak";
+  if (score === 2 || score === 3) return "Medium";
+  return "Strong";
+}
+
+// Function to Validate Password
+function validatePassword() {
+  let value = passInput.value;
+  if (value.length < 8) {
+    showError(passError, "Password must be at least 8 characters.");
+    setStatus(passwordStatus, false, "x");
+    updateStrength(value);
+    return false;
+  }
+  if (!containsNumber(value)) {
+    showError(passError, "Password must contain at least one number.");
+    setStatus(passwordStatus, false, "x");
+    updateStrength(value);
+    return false;
+  }
+  clearError(passError);
+  setStatus(passwordStatus, true, "correct");
+  updateStrength(value);
+  return true;
+}
+
+// Update strength UI
+function updateStrength(s) {
+  if (!s) {
+    passwordStrength.textContent = "";
+    passwordStrength.className = "strength";
+    return;
+  }
+  const level = evaluateStrength(s);
+  passwordStrength.textContent = level;
+  passwordStrength.className = "strength " + (level === "Weak" ? "weak" : (level === "Medium" ? "medium" : "strong"));
+}
+
+// Function to Validate Confirm
+function validateConfirm() {
+  let pass = passInput.value;
+  let confirm = confirmInput.value;
+  if (confirm === "") {
+    showError(confirmError, "Please confirm your password.");
+    setStatus(confirmStatus, false, "x");
+    return false;
+  }
+  if (confirm !== pass) {
+    showError(confirmError, "Passwords do not match.");
+    setStatus(confirmStatus, false, "x");
+    return false;
+  }
+  clearError(confirmError);
+  setStatus(confirmStatus, true, "correct");
+  return true;
+}
+
+// Function to Validate Form
+function validateForm() {
+  let okName = validateName();
+  let okEmail = validateEmail();
+  let okPass = validatePassword();
+  let okConfirm = validateConfirm();
+  const allOk = okName && okEmail && okPass && okConfirm;
+  // Disable submit until valid (Bonus)
+  submitBtn.disabled = !allOk;
+  return allOk;
+}
+
+// Prevent Default Reloading
+form.addEventListener("submit", function (event) {
+  event.preventDefault();
+  // Clear Result
+  result.innerHTML = "";
+
+  // Validate Form
+  if (validateForm()) {
+    result.innerHTML = "Form is valid!";
+    result.className = "ok";
+  } else {
+    result.innerHTML = "Please fix the errors.";
+    result.className = "error";
+  }
+});
+
+// Exercise 2: Validate fields while typing (input event)
+nameInput.addEventListener("input", function () {
+  validateName();
+  validateForm();
+});
+emailInput.addEventListener("input", function () {
+  validateEmail();
+  validateForm();
+});
+passInput.addEventListener("input", function () {
+  validatePassword();
+  // keep confirm validation in case user typed confirm already
+  validateConfirm();
+  validateForm();
+});
+confirmInput.addEventListener("input", function () {
+  validateConfirm();
+  validateForm();
+});
+
+// Bonus: Show/hide password button
+togglePassword.addEventListener("click", function () {
+  if (passInput.type === "password") {
+    passInput.type = "text";
+    confirmInput.type = "text";
+    togglePassword.textContent = "Hide";
+  } else {
+    passInput.type = "password";
+    confirmInput.type = "password";
+    togglePassword.textContent = "Show";
+  }
+});
+
+// Initialize: run validations to set initial states and disable submit
+updateStrength(passInput.value);
+validateForm();
+</script>
+
+</body>
+</html>
